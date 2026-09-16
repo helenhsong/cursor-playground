@@ -3,7 +3,7 @@ import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/blueprint/',
+  base: '/cursor-playground/',
   build: {
     rollupOptions: {
       input: ['index.html', 'readme/index.html'],

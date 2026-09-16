@@ -1,1 +1,1 @@
-# Blueprint
+# Cursor Playground

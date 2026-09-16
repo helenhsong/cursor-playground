@@ -170,7 +170,13 @@ function gazeDirectionFor(pointer, anchor, deadZone, personId) {
     const localY = Math.max(-1, Math.min(1, deltaY / 20))
     const horizontalDistance = Math.abs(localX)
 
-    if (horizontalDistance >= 0.14) {
+    if (localY >= 0.72) {
+      if (localX <= -0.68) direction = 'sw'
+      else if (localX <= -0.22) direction = 'ssw'
+      else if (localX < 0.22) direction = 's'
+      else if (localX < 0.68) direction = 'sse'
+      else direction = 'se'
+    } else if (horizontalDistance >= 0.14) {
       const horizontalName = localX < 0 ? 'left' : 'right'
 
       if (localY <= -0.25) {

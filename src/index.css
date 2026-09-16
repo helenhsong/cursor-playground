@@ -348,7 +348,7 @@ body {
 .gaze-cursor {
   position: absolute;
   z-index: 4;
-  width: 3.9rem;
+  width: 4.5rem;
   height: auto;
   filter: drop-shadow(0 0.14rem 0.16rem rgb(73 38 18 / 0.16));
   pointer-events: none;

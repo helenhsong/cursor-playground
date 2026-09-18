@@ -2,19 +2,19 @@ import { useEffect, useRef } from 'react'
 
 const WATER_RAMP = ['.', '·', ':', ';', "'", '`', '~', '-', '=', '+', '*']
 const WATER_COLORS = [
-  '#96a7c6',
-  '#9aadd2',
-  '#9fb5dd',
-  '#a5bee6',
-  '#acc8ed',
-  '#b5d3f1',
-  '#c0dcf4',
-  '#cae2f3',
-  '#d5e9f4',
-  '#e1eff5',
-  '#ebf3f6',
-  '#f1f0e9',
-  '#f5e7cf',
+  '#8b9fbe',
+  '#8fa4c7',
+  '#94aad0',
+  '#99b0d8',
+  '#9fb7df',
+  '#a6bfe5',
+  '#afc7e9',
+  '#b9d0ed',
+  '#c4d9f0',
+  '#d0e2f3',
+  '#dceaf5',
+  '#e8f1f7',
+  '#f3f7fa',
 ]
 const DITHER = [
   [0, 8, 2, 10],
@@ -138,7 +138,7 @@ export function AsciiLake() {
 
       const now = performance.now()
       const time = (now - startedAt) / 1000
-      context.fillStyle = '#8fa1bd'
+      context.fillStyle = '#8298ba'
       context.fillRect(0, 0, width, height)
       buckets.forEach((bucket) => { bucket.length = 0 })
 
@@ -152,7 +152,8 @@ export function AsciiLake() {
           const dither = DITHER[row % 4][column % 4] / 16 - 0.5
           const density = clamp(0.5 + water * 0.34 + dither * 0.12)
           const glyphIndex = Math.min(WATER_RAMP.length - 1, Math.floor(density * WATER_RAMP.length))
-          const highlight = clamp(0.28 + ambient * 0.7 + Math.max(0, ripple) * 0.55)
+          const ambientTone = clamp(0.32 + ambient * 0.9, 0, 0.68)
+          const highlight = clamp(ambientTone + Math.max(0, ripple) * 0.48)
           const colorIndex = Math.min(WATER_COLORS.length - 1, Math.floor(highlight * WATER_COLORS.length))
           pushGlyph(WATER_COLORS[colorIndex], x, y, WATER_RAMP[glyphIndex])
         }

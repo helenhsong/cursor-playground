@@ -218,18 +218,69 @@ body {
   user-select: none;
 }
 
-/* Water */
+/* Gallery */
 
-.scene--water {
-  background: #8fa1bd;
+.scene--gallery {
+  background: #f8f8f6;
   cursor: default;
 }
 
-.ascii-lake {
-  display: block;
+.circular-gallery {
+  position: relative;
   width: 100%;
   height: 100%;
-  touch-action: none;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.circular-gallery__stage {
+  position: absolute;
+  display: flex;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.circular-gallery__ring {
+  position: relative;
+  width: 0;
+  height: 0;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.circular-gallery__card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  box-shadow: 0 0.45rem 1.2rem rgb(20 20 24 / 0.16);
+  transform-origin: center;
+  transform-style: preserve-3d;
+  backface-visibility: visible;
+}
+
+.circular-gallery__card img,
+.circular-gallery__placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 800%;
+  max-width: none;
+  height: 800%;
+  backface-visibility: visible;
+  transform: scale(0.125);
+  transform-origin: top left;
+}
+
+.circular-gallery__card img {
+  object-fit: cover;
+  user-select: none;
 }
 
 /* Dither */

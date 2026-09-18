@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { AsciiLake } from './AsciiLake'
+import { CircularGallery } from './CircularGallery'
 import { DitherReveal } from './DitherReveal'
 
 const PLAYGROUNDS = [
   { id: 'gaze', name: 'Gaze' },
   { id: 'dither', name: 'Dither' },
-  { id: 'water', name: 'Water' },
+  { id: 'gallery', name: 'Gallery' },
 ]
 
 const GAZE_EYES = [
@@ -76,6 +76,10 @@ const GAZE_PATCH_OFFSETS = {
 }
 
 const ASSET_BASE = `${import.meta.env.BASE_URL}assets/`
+const GALLERY_IMAGES = Array.from(
+  { length: 10 },
+  (_, index) => `${ASSET_BASE}gallery-images/${index + 1}.jpg`,
+)
 
 const ENVIRONMENT_CONTROLS = {
   gaze: [
@@ -237,10 +241,14 @@ function GazePlayground({ pointer, settings }) {
   )
 }
 
-function WaterPlayground() {
+function GalleryPlayground() {
   return (
-    <div className="scene scene--water">
-      <AsciiLake />
+    <div className="scene scene--gallery">
+      <CircularGallery
+        images={GALLERY_IMAGES}
+        count={GALLERY_IMAGES.length}
+        card={{ width: 56, height: 40, radius: 0 }}
+      />
     </div>
   )
 }
@@ -261,7 +269,7 @@ function DitherPlayground({ pointer, settings }) {
 }
 
 function PlaygroundScene({ id, pointer, settings }) {
-  if (id === 'water') return <WaterPlayground />
+  if (id === 'gallery') return <GalleryPlayground />
   if (id === 'dither') return <DitherPlayground pointer={pointer} settings={settings} />
   return <GazePlayground pointer={pointer} settings={settings} />
 }

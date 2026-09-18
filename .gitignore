@@ -23,6 +23,7 @@ credentials*.json
 !.vscode/extensions.json
 .idea
 .DS_Store
+public/assets/gallery-images/*.png
 *.suo
 *.ntvs*
 *.njsproj

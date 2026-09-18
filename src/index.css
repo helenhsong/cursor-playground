@@ -13,6 +13,21 @@ body {
   background: var(--project-bg);
 }
 
+.app-shell {
+  min-height: 100vh;
+  opacity: 0;
+  transition: opacity 420ms cubic-bezier(0.22, 0.7, 0.28, 1);
+}
+
+.app-shell.is-ready {
+  opacity: 1;
+}
+
+.app-shell:not(.is-ready) {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .project-page,
 .project-page * {
   box-sizing: border-box;
@@ -269,6 +284,12 @@ body {
 
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .app-shell {
+    transition: none;
+  }
+}
+
 html[data-ph-open] .project-page {
-  visibility: hidden;
+  display: none;
 }

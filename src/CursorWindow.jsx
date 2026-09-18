@@ -266,7 +266,6 @@ export function CursorWindow() {
   const canvasRef = useRef(null)
   const [playgroundIndex, setPlaygroundIndex] = useState(0)
   const [pointer, setPointer] = useState({ x: 52, y: 48 })
-  const [isLocationOpen, setIsLocationOpen] = useState(false)
 
   const playground = PLAYGROUNDS[playgroundIndex]
   const settings = DEFAULT_SETTINGS[playground.id]
@@ -275,23 +274,16 @@ export function CursorWindow() {
     const wrapped = (nextIndex + PLAYGROUNDS.length) % PLAYGROUNDS.length
     setPlaygroundIndex(wrapped)
     setPointer({ x: 52, y: 48 })
-    setIsLocationOpen(false)
   }
 
   useEffect(() => {
     function handleShortcut(event) {
-      if (event.key === 'Escape') {
-        setIsLocationOpen(false)
-        return
-      }
-
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
 
       event.preventDefault()
       const direction = event.key === 'ArrowLeft' ? -1 : 1
       setPlaygroundIndex((current) => (current + direction + PLAYGROUNDS.length) % PLAYGROUNDS.length)
       setPointer({ x: 52, y: 48 })
-      setIsLocationOpen(false)
     }
 
     window.addEventListener('keydown', handleShortcut)
@@ -336,39 +328,7 @@ export function CursorWindow() {
           </nav>
         </div>
 
-        <div
-          className="location-control"
-          onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget)) setIsLocationOpen(false)
-          }}
-        >
-          <button
-            className={`location-bar${isLocationOpen ? ' is-open' : ''}`}
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={isLocationOpen}
-            onClick={() => setIsLocationOpen((current) => !current)}
-          >
-            <span>cursor/</span><strong>{playground.id}</strong>
-          </button>
-
-          {isLocationOpen && (
-            <div className="location-menu" role="menu" aria-label="Choose cursor playground">
-              {PLAYGROUNDS.map((option, index) => (
-                <button
-                  className="location-option"
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={index === playgroundIndex}
-                  key={option.id}
-                  onClick={() => switchPlayground(index)}
-                >
-                  <span className="location-option__label">{option.name}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <div className="window-title" aria-live="polite">{playground.name}</div>
       </header>
 
       <div

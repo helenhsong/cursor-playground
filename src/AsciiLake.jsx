@@ -152,7 +152,7 @@ export function AsciiLake() {
           const dither = DITHER[row % 4][column % 4] / 16 - 0.5
           const density = clamp(0.5 + water * 0.34 + dither * 0.12)
           const glyphIndex = Math.min(WATER_RAMP.length - 1, Math.floor(density * WATER_RAMP.length))
-          const highlight = clamp(0.38 + water * 1.26)
+          const highlight = clamp(0.28 + ambient * 0.7 + Math.max(0, ripple) * 0.55)
           const colorIndex = Math.min(WATER_COLORS.length - 1, Math.floor(highlight * WATER_COLORS.length))
           pushGlyph(WATER_COLORS[colorIndex], x, y, WATER_RAMP[glyphIndex])
         }

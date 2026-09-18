@@ -6,8 +6,8 @@ import { CursorWindow } from './CursorWindow.jsx'
 
 const ASSET_BASE = `${import.meta.env.BASE_URL}assets/`
 const INTRO_ASSETS = [
-  `${ASSET_BASE}gaze-center.png`,
-  `${ASSET_BASE}gaze-peony-cursor.png`,
+  `${ASSET_BASE}gaze-center.jpg`,
+  `${ASSET_BASE}gaze-peony-cursor-small.png`,
 ]
 
 function preloadImage(source) {
@@ -26,10 +26,9 @@ function App() {
   useEffect(() => {
     let isCancelled = false
     const isReadme = /\/readme\/?$/.test(window.location.pathname)
-    const fontsReady = document.fonts?.ready ?? Promise.resolve()
     const assetsReady = isReadme ? [] : INTRO_ASSETS.map(preloadImage)
 
-    Promise.all([fontsReady, ...assetsReady]).then(() => {
+    Promise.all(assetsReady).then(() => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           if (!isCancelled) setIsReady(true)

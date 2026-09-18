@@ -252,7 +252,13 @@ body {
 }
 
 .dither-reveal__canvas {
+  opacity: 0;
   image-rendering: pixelated;
+  transition: opacity 280ms ease;
+}
+
+.dither-reveal__canvas.is-loaded {
+  opacity: 1;
 }
 
 .dither-carrot-cursor {

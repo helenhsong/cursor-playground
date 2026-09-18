@@ -81,115 +81,6 @@ void main() {
 }
 `
 
-function createArtwork() {
-  const canvas = document.createElement('canvas')
-  canvas.width = 1200
-  canvas.height = 800
-  const context = canvas.getContext('2d')
-
-  const background = context.createLinearGradient(0, 0, 1200, 800)
-  background.addColorStop(0, '#ef775f')
-  background.addColorStop(0.42, '#e85c8f')
-  background.addColorStop(1, '#4d65c9')
-  context.fillStyle = background
-  context.fillRect(0, 0, 1200, 800)
-
-  context.fillStyle = '#ffe69a'
-  context.beginPath()
-  context.arc(940, 174, 132, 0, Math.PI * 2)
-  context.fill()
-
-  context.fillStyle = '#43c6b6'
-  context.beginPath()
-  context.moveTo(0, 485)
-  context.bezierCurveTo(210, 355, 420, 520, 620, 420)
-  context.bezierCurveTo(845, 305, 1020, 460, 1200, 330)
-  context.lineTo(1200, 800)
-  context.lineTo(0, 800)
-  context.closePath()
-  context.fill()
-
-  context.fillStyle = '#1a2248'
-  context.beginPath()
-  context.moveTo(0, 642)
-  context.bezierCurveTo(160, 520, 315, 650, 465, 540)
-  context.bezierCurveTo(665, 395, 790, 640, 960, 505)
-  context.bezierCurveTo(1050, 438, 1130, 455, 1200, 412)
-  context.lineTo(1200, 800)
-  context.lineTo(0, 800)
-  context.closePath()
-  context.fill()
-
-  context.strokeStyle = '#f9d36f'
-  context.lineWidth = 34
-  context.lineCap = 'round'
-  context.beginPath()
-  context.moveTo(68, 184)
-  context.bezierCurveTo(275, 42, 510, 64, 698, 218)
-  context.bezierCurveTo(815, 314, 861, 405, 1036, 423)
-  context.stroke()
-
-  context.strokeStyle = '#17204a'
-  context.lineWidth = 18
-  context.beginPath()
-  context.arc(332, 292, 176, 0.2, Math.PI * 1.75)
-  context.stroke()
-
-  context.fillStyle = '#f4eee5'
-  context.beginPath()
-  context.ellipse(608, 422, 115, 190, -0.22, 0, Math.PI * 2)
-  context.fill()
-
-  context.fillStyle = '#f59e58'
-  context.beginPath()
-  context.ellipse(575, 383, 58, 98, -0.55, 0, Math.PI * 2)
-  context.fill()
-
-  context.fillStyle = '#25214c'
-  context.beginPath()
-  context.arc(590, 356, 16, 0, Math.PI * 2)
-  context.arc(648, 339, 16, 0, Math.PI * 2)
-  context.fill()
-
-  context.strokeStyle = '#25214c'
-  context.lineWidth = 11
-  context.beginPath()
-  context.arc(629, 403, 40, 0.15, Math.PI * 0.86)
-  context.stroke()
-
-  context.strokeStyle = '#eff6d6'
-  context.lineWidth = 15
-  context.beginPath()
-  context.moveTo(885, 760)
-  context.bezierCurveTo(850, 610, 898, 475, 1090, 310)
-  context.stroke()
-
-  context.fillStyle = '#ecf6c9'
-  const leaves = [
-    [870, 645, -0.8], [925, 595, 0.75], [902, 525, -0.7],
-    [975, 480, 0.7], [1015, 410, -0.75], [1070, 355, 0.55],
-  ]
-  for (const [x, y, rotation] of leaves) {
-    context.save()
-    context.translate(x, y)
-    context.rotate(rotation)
-    context.beginPath()
-    context.ellipse(0, 0, 29, 69, 0, 0, Math.PI * 2)
-    context.fill()
-    context.restore()
-  }
-
-  context.strokeStyle = '#ffb4d0'
-  context.lineWidth = 12
-  for (let index = 0; index < 5; index += 1) {
-    context.beginPath()
-    context.arc(185 + index * 54, 680 - index * 9, 24 + index * 5, 0, Math.PI * 2)
-    context.stroke()
-  }
-
-  return canvas
-}
-
 function compileShader(gl, type, source) {
   const shader = gl.createShader(type)
   gl.shaderSource(shader, source)
@@ -208,6 +99,7 @@ export function DitherReveal({ imageSrc, settings }) {
     const container = containerRef.current
     const canvas = canvasRef.current
     if (!container || !canvas) return undefined
+    canvas.classList.remove('is-loaded')
 
     const gl = canvas.getContext('webgl', { antialias: false, premultipliedAlpha: false })
     if (!gl) return undefined
@@ -248,22 +140,33 @@ export function DitherReveal({ imageSrc, settings }) {
       imageAspect: uniform('uImageAspect'),
     }
 
-    const artwork = createArtwork()
     const texture = gl.createTexture()
     gl.bindTexture(gl.TEXTURE_2D, texture)
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, artwork)
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      1,
+      1,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      new Uint8Array([17, 16, 25, 255]),
+    )
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
-    let imageAspect = artwork.width / artwork.height
+    let imageAspect = 1
     const image = new Image()
+    image.decoding = 'async'
     image.onload = () => {
       imageAspect = image.naturalWidth / image.naturalHeight
       gl.bindTexture(gl.TEXTURE_2D, texture)
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
+      requestAnimationFrame(() => canvas.classList.add('is-loaded'))
     }
     image.src = imageSrc
 

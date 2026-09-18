@@ -18,44 +18,43 @@ const GAZE_EYES = [
 ]
 
 const GAZE_ASSETS = {
-  nw: 'gaze-nw.png',
-  nnw: 'gaze-nnw.png',
-  n: 'gaze-up.png',
-  nne: 'gaze-nne.png',
-  ne: 'gaze-ne.png',
-  wnw: 'gaze-wnw.png',
-  nw1: 'gaze-nw1.png',
-  n1: 'gaze-n1.png',
-  ne1: 'gaze-ne1.png',
-  ene: 'gaze-ene.png',
-  w: 'gaze-w.png',
-  w1: 'gaze-w1.png',
-  e1: 'gaze-e1.png',
-  e: 'gaze-e.png',
-  wsw: 'gaze-wsw.png',
-  sw1: 'gaze-sw1.png',
-  s1: 'gaze-s1.png',
-  se1: 'gaze-se1.png',
-  ese: 'gaze-ese.png',
-  sw: 'gaze-sw.png',
-  ssw: 'gaze-ssw.png',
-  s: 'gaze-down.png',
-  sse: 'gaze-sse.png',
-  se: 'gaze-se.png',
-  'up-left-soft': 'gaze-up-left-soft.png',
-  'up-right-soft': 'gaze-up-right-soft.png',
-  'center-up': 'gaze-center-up.png',
-  'center-down': 'gaze-center-down.png',
-  'middle-left-soft': 'gaze-middle-left-soft.png',
-  'middle-left-mid': 'gaze-middle-left-mid.png',
-  'middle-right-soft': 'gaze-middle-right-soft.png',
-  'middle-right-mid': 'gaze-middle-right-mid.png',
-  'middle-up-left-soft': 'gaze-middle-up-left-soft.png',
-  'middle-up-right-soft': 'gaze-middle-up-right-soft.png',
-  'middle-down-left-soft': 'gaze-middle-down-left-soft.png',
-  'middle-down-right-soft': 'gaze-middle-down-right-soft.png',
+  nw: 'gaze-nw.jpg',
+  nnw: 'gaze-nnw.jpg',
+  n: 'gaze-up.jpg',
+  nne: 'gaze-nne.jpg',
+  ne: 'gaze-ne.jpg',
+  wnw: 'gaze-wnw.jpg',
+  nw1: 'gaze-nw1.jpg',
+  n1: 'gaze-n1.jpg',
+  ne1: 'gaze-ne1.jpg',
+  ene: 'gaze-ene.jpg',
+  w: 'gaze-w.jpg',
+  w1: 'gaze-w1.jpg',
+  e1: 'gaze-e1.jpg',
+  e: 'gaze-e.jpg',
+  wsw: 'gaze-wsw.jpg',
+  sw1: 'gaze-sw1.jpg',
+  s1: 'gaze-s1.jpg',
+  se1: 'gaze-se1.jpg',
+  ese: 'gaze-ese.jpg',
+  sw: 'gaze-sw.jpg',
+  ssw: 'gaze-ssw.jpg',
+  s: 'gaze-down.jpg',
+  sse: 'gaze-sse.jpg',
+  se: 'gaze-se.jpg',
+  'up-left-soft': 'gaze-up-left-soft.jpg',
+  'up-right-soft': 'gaze-up-right-soft.jpg',
+  'center-up': 'gaze-center-up.jpg',
+  'center-down': 'gaze-center-down.jpg',
+  'middle-left-soft': 'gaze-middle-left-soft.jpg',
+  'middle-left-mid': 'gaze-middle-left-mid.jpg',
+  'middle-right-soft': 'gaze-middle-right-soft.jpg',
+  'middle-right-mid': 'gaze-middle-right-mid.jpg',
+  'middle-up-left-soft': 'gaze-middle-up-left-soft.jpg',
+  'middle-up-right-soft': 'gaze-middle-up-right-soft.jpg',
+  'middle-down-left-soft': 'gaze-middle-down-left-soft.jpg',
+  'middle-down-right-soft': 'gaze-middle-down-right-soft.jpg',
 }
-const GAZE_DIRECTIONS = Object.keys(GAZE_ASSETS)
 const GAZE_GRID = [
   ['nw', 'nnw', 'n', 'nne', 'ne'],
   ['wnw', 'nw1', 'n1', 'ne1', 'ene'],
@@ -163,7 +162,9 @@ function GazePlayground({ pointer, settings }) {
   const directions = Object.fromEntries(
     GAZE_PEOPLE.map((person) => [
       person.id,
-      gazeDirectionFor(pointer, person.anchor, settings.deadZone, person.id),
+      pointer.active
+        ? gazeDirectionFor(pointer, person.anchor, settings.deadZone, person.id)
+        : null,
     ]),
   )
 
@@ -201,16 +202,19 @@ function GazePlayground({ pointer, settings }) {
 
         <image
           className="gaze-base"
-          href={`${ASSET_BASE}gaze-center.png`}
+          href={`${ASSET_BASE}gaze-center.jpg`}
           width="1536"
           height="1024"
         />
-        {GAZE_DIRECTIONS.flatMap((option) => GAZE_PEOPLE.map((person, personIndex) => {
+        {GAZE_PEOPLE.map((person, personIndex) => {
+          const option = directions[person.id]
+          if (!option) return null
+
           const offset = GAZE_PATCH_OFFSETS[option]?.[personIndex] ?? { x: 0, y: 0 }
           return (
             <image
               key={`${option}-${person.id}`}
-              className={`gaze-state${directions[person.id] === option ? ' is-active' : ''}`}
+              className="gaze-state is-active"
               href={`${ASSET_BASE}${GAZE_ASSETS[option]}`}
               x={offset.x}
               y={offset.y}
@@ -219,12 +223,12 @@ function GazePlayground({ pointer, settings }) {
               mask={`url(#gaze-eye-regions-${person.id})`}
             />
           )
-        }))}
+        })}
       </svg>
 
       <img
         className="gaze-cursor"
-        src={`${ASSET_BASE}gaze-peony-cursor.png`}
+        src={`${ASSET_BASE}gaze-peony-cursor-small.png`}
         alt=""
         draggable="false"
         style={{ left: `${pointer.x}%`, top: `${pointer.y}%` }}
@@ -244,10 +248,10 @@ function WaterPlayground() {
 function DitherPlayground({ pointer, settings }) {
   return (
     <div className="scene scene--dither">
-      <DitherReveal imageSrc={`${ASSET_BASE}toki.png`} settings={settings} />
+      <DitherReveal imageSrc={`${ASSET_BASE}toki.jpg`} settings={settings} />
       <img
         className="dither-carrot-cursor"
-        src={`${ASSET_BASE}dither-carrot-cursor.png`}
+        src={`${ASSET_BASE}dither-carrot-cursor-small.png`}
         alt=""
         draggable="false"
         style={{ left: `${pointer.x}%`, top: `${pointer.y}%` }}
@@ -265,7 +269,7 @@ function PlaygroundScene({ id, pointer, settings }) {
 export function CursorWindow() {
   const canvasRef = useRef(null)
   const [playgroundIndex, setPlaygroundIndex] = useState(0)
-  const [pointer, setPointer] = useState({ x: 52, y: 48 })
+  const [pointer, setPointer] = useState({ x: 52, y: 48, active: false })
 
   const playground = PLAYGROUNDS[playgroundIndex]
   const settings = DEFAULT_SETTINGS[playground.id]
@@ -273,7 +277,7 @@ export function CursorWindow() {
   function switchPlayground(nextIndex) {
     const wrapped = (nextIndex + PLAYGROUNDS.length) % PLAYGROUNDS.length
     setPlaygroundIndex(wrapped)
-    setPointer({ x: 52, y: 48 })
+    setPointer({ x: 52, y: 48, active: false })
   }
 
   useEffect(() => {
@@ -283,7 +287,7 @@ export function CursorWindow() {
       event.preventDefault()
       const direction = event.key === 'ArrowLeft' ? -1 : 1
       setPlaygroundIndex((current) => (current + direction + PLAYGROUNDS.length) % PLAYGROUNDS.length)
-      setPointer({ x: 52, y: 48 })
+      setPointer({ x: 52, y: 48, active: false })
     }
 
     window.addEventListener('keydown', handleShortcut)
@@ -295,6 +299,7 @@ export function CursorWindow() {
     const next = {
       x: ((event.clientX - bounds.left) / bounds.width) * 100,
       y: ((event.clientY - bounds.top) / bounds.height) * 100,
+      active: true,
     }
 
     setPointer(next)

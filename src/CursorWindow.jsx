@@ -285,7 +285,6 @@ export function CursorWindow() {
   function switchPlayground(nextIndex) {
     const wrapped = (nextIndex + PLAYGROUNDS.length) % PLAYGROUNDS.length
     setPlaygroundIndex(wrapped)
-    setPointer({ x: 52, y: 48, active: false })
   }
 
   useEffect(() => {
@@ -295,11 +294,32 @@ export function CursorWindow() {
       event.preventDefault()
       const direction = event.key === 'ArrowLeft' ? -1 : 1
       setPlaygroundIndex((current) => (current + direction + PLAYGROUNDS.length) % PLAYGROUNDS.length)
-      setPointer({ x: 52, y: 48, active: false })
     }
 
     window.addEventListener('keydown', handleShortcut)
     return () => window.removeEventListener('keydown', handleShortcut)
+  }, [])
+
+  useEffect(() => {
+    function trackPointer(event) {
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const bounds = canvas.getBoundingClientRect()
+      const isInside = event.clientX >= bounds.left
+        && event.clientX <= bounds.right
+        && event.clientY >= bounds.top
+        && event.clientY <= bounds.bottom
+      if (!isInside) return
+
+      setPointer({
+        x: ((event.clientX - bounds.left) / bounds.width) * 100,
+        y: ((event.clientY - bounds.top) / bounds.height) * 100,
+        active: true,
+      })
+    }
+
+    window.addEventListener('pointermove', trackPointer, { passive: true })
+    return () => window.removeEventListener('pointermove', trackPointer)
   }, [])
 
   function handlePointerMove(event) {
@@ -350,7 +370,8 @@ export function CursorWindow() {
         role="application"
         aria-label={`${playground.name} cursor playground`}
         tabIndex="0"
-        onPointerMove={handlePointerMove}
+        onPointerEnter={handlePointerMove}
+        onPointerDown={handlePointerMove}
       >
         <PlaygroundScene
           id={playground.id}

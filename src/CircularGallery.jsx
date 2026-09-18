@@ -88,6 +88,10 @@ export function CircularGallery({
     const resolved = images.map(resolveSrc).filter(Boolean)
     return resolved.length ? resolved : Array.from({ length: PLACEHOLDER_COUNT }, () => null)
   }, [images])
+  const imageSources = useMemo(() => [...new Set(source.filter(Boolean))], [source])
+  const sourceSignature = imageSources.join('\n')
+  const [loadedSourceSignature, setLoadedSourceSignature] = useState('')
+  const imagesReady = imageSources.length === 0 || loadedSourceSignature === sourceSignature
 
   const cardCount = Math.max(1, Math.round(count))
   const totalCards = Math.max(1, ENTRY_CARDS + cardCount - 1)
@@ -157,6 +161,34 @@ export function CircularGallery({
   useEffect(() => {
     frame.current = frameConfiguration
   }, [frameConfiguration])
+
+  useEffect(() => {
+    let isCancelled = false
+    const pending = imageSources.map((imageSource) => new Promise((resolve) => {
+      const image = new Image()
+      const finish = () => resolve()
+
+      image.onload = () => {
+        if (typeof image.decode === 'function') {
+          image.decode().catch(() => {}).finally(finish)
+        } else {
+          finish()
+        }
+      }
+      image.onerror = finish
+      image.src = imageSource
+    }))
+
+    Promise.all(pending).then(() => {
+      requestAnimationFrame(() => {
+        if (!isCancelled) setLoadedSourceSignature(sourceSignature)
+      })
+    })
+
+    return () => {
+      isCancelled = true
+    }
+  }, [imageSources, sourceSignature])
 
   useEffect(() => {
     const node = containerRef.current
@@ -374,8 +406,9 @@ export function CircularGallery({
   return (
     <div
       ref={containerRef}
-      className="circular-gallery"
+      className={`circular-gallery${imagesReady ? ' is-ready' : ''}`}
       style={{ background }}
+      aria-busy={!imagesReady}
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >

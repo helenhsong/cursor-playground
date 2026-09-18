@@ -241,8 +241,14 @@ body {
   inset: 0;
   align-items: center;
   justify-content: center;
+  opacity: 0;
   transform-style: preserve-3d;
+  transition: opacity 420ms ease;
   will-change: transform;
+}
+
+.circular-gallery.is-ready .circular-gallery__stage {
+  opacity: 1;
 }
 
 .circular-gallery__ring {
@@ -339,7 +345,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mac-window {
+  .mac-window,
+  .circular-gallery__stage {
     transition: none;
   }
 }

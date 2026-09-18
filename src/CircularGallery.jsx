@@ -78,7 +78,6 @@ export function CircularGallery({
 }) {
   const containerRef = useRef(null)
   const stageRef = useRef(null)
-  const ringRef = useRef(null)
   const cardRefs = useRef([])
   const [size, setSize] = useState({ width: 0, height: 0 })
   const [pointerFine, setPointerFine] = useState(false)
@@ -107,6 +106,7 @@ export function CircularGallery({
   const scrollTotalPixels = Math.max(1, scrollPerCard * totalCards)
   const hoverRadius = (100 + HOVER_REACH * 80) * baseScale
   const zoomScale = clamp(zoom, 0.5, 20) * baseScale
+  const renderScale = Math.max(1, clamp(zoom, 0.5, 20))
 
   const scene = useRef({
     cards: [],
@@ -141,6 +141,7 @@ export function CircularGallery({
     lapProgress,
     spanDegrees,
     zoomScale,
+    renderScale,
     lift: ringRadius * zoomScale + zoomOffset,
   }), [
     baseScale,
@@ -155,6 +156,7 @@ export function CircularGallery({
     spanDegrees,
     zoomOffset,
     zoomScale,
+    renderScale,
   ])
   const frame = useRef(frameConfiguration)
 
@@ -226,19 +228,22 @@ export function CircularGallery({
         stageRef.current.style.transform = `rotate(${currentZ * entryWeight}deg) rotateX(${currentX * entryWeight}deg) rotateY(${currentY * entryWeight}deg)`
       }
 
-      if (ringRef.current) {
-        const { x, y, rotation, scale } = state.ring
-        ringRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${rotation}deg) scale(${scale})`
-      }
+      const ringRotation = (state.ring.rotation * Math.PI) / 180
+      const ringCos = Math.cos(ringRotation)
+      const ringSin = Math.sin(ringRotation)
 
       state.cards.forEach((item, index) => {
         const node = cardRefs.current[index]
         if (!node) return
-        const x = config.ringRadius * Math.cos(item.angle) + item.currentX * entryWeight
-        const y = config.ringRadius * Math.sin(item.angle) + item.currentY * entryWeight
-        const spin = (item.angle * 180) / Math.PI + 90
+        const localX = config.ringRadius * Math.cos(item.angle) + item.currentX * entryWeight
+        const localY = config.ringRadius * Math.sin(item.angle) + item.currentY * entryWeight
+        const x = state.ring.x + state.ring.scale * (localX * ringCos - localY * ringSin)
+        const y = state.ring.y + state.ring.scale * (localX * ringSin + localY * ringCos)
+        const spin = (item.angle * 180) / Math.PI + 90 + state.ring.rotation
         const twist = item.currentRotation * entryWeight
-        const scale = 1 + (item.currentScale - 1) * entryWeight
+        const scale = (
+          state.ring.scale * (1 + (item.currentScale - 1) * entryWeight)
+        ) / config.renderScale
         node.style.transform = `perspective(${CARD_PERSPECTIVE}px) translate3d(${x}px, ${y}px, 0) rotate(${spin}deg) rotateY(${twist}deg) scale(${scale})`
       })
     }
@@ -417,7 +422,7 @@ export function CircularGallery({
         className="circular-gallery__stage"
         style={{ perspective: `${STAGE_PERSPECTIVE}px` }}
       >
-        <div ref={ringRef} className="circular-gallery__ring">
+        <div className="circular-gallery__ring">
           {Array.from({ length: cardCount }, (_, index) => {
             const src = source[index % source.length]
             return (
@@ -426,11 +431,11 @@ export function CircularGallery({
                 ref={(node) => { cardRefs.current[index] = node }}
                 className="circular-gallery__card"
                 style={{
-                  width: cardOptions.width,
-                  height: cardOptions.height,
-                  marginLeft: -cardOptions.width / 2,
-                  marginTop: -cardOptions.height / 2,
-                  borderRadius: cardOptions.radius,
+                  width: cardOptions.width * renderScale,
+                  height: cardOptions.height * renderScale,
+                  marginLeft: -(cardOptions.width * renderScale) / 2,
+                  marginTop: -(cardOptions.height * renderScale) / 2,
+                  borderRadius: cardOptions.radius * renderScale,
                 }}
               >
                 {src ? (

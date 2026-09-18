@@ -256,7 +256,6 @@ body {
   width: 0;
   height: 0;
   transform-origin: center;
-  will-change: transform;
 }
 
 .circular-gallery__card {
@@ -276,15 +275,14 @@ body {
   top: 0;
   left: 0;
   display: block;
-  width: 800%;
+  width: 100%;
   max-width: none;
-  height: 800%;
+  height: 100%;
   backface-visibility: visible;
-  transform: scale(0.125);
-  transform-origin: top left;
 }
 
 .circular-gallery__card img {
+  image-rendering: auto;
   object-fit: cover;
   user-select: none;
 }

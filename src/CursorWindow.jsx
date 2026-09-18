@@ -311,32 +311,30 @@ export function CursorWindow() {
   return (
     <section className="mac-window" aria-label="Cursor Playground">
       <header className="window-titlebar">
-        <div className="traffic-lights" aria-label="Window controls">
-          <button className="traffic-light traffic-light--close" type="button" aria-label="Close" />
-          <button className="traffic-light traffic-light--minimize" type="button" aria-label="Minimize" />
-          <button className="traffic-light traffic-light--zoom" type="button" aria-label="Zoom" />
-        </div>
+        <div className="window-toolbar-left">
+          <div className="traffic-lights" aria-label="Window controls">
+            <button className="traffic-light traffic-light--close" type="button" aria-label="Close" />
+            <button className="traffic-light traffic-light--minimize" type="button" aria-label="Minimize" />
+            <button className="traffic-light traffic-light--zoom" type="button" aria-label="Zoom" />
+          </div>
 
-        <nav className="browser-navigation" aria-label="Cycle through environments">
-          <button
-            type="button"
-            aria-label="Previous environment"
-            onClick={() => switchPlayground(playgroundIndex - 1)}
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="m15 4-8 8 8 8" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            aria-label="Next environment"
-            onClick={() => switchPlayground(playgroundIndex + 1)}
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="m9 4 8 8-8 8" />
-            </svg>
-          </button>
-        </nav>
+          <nav className="browser-navigation" aria-label="Cycle through environments">
+            <button
+              type="button"
+              aria-label="Previous environment"
+              onClick={() => switchPlayground(playgroundIndex - 1)}
+            >
+              <span aria-hidden="true">←</span>
+            </button>
+            <button
+              type="button"
+              aria-label="Next environment"
+              onClick={() => switchPlayground(playgroundIndex + 1)}
+            >
+              <span aria-hidden="true">→</span>
+            </button>
+          </nav>
+        </div>
 
         <div
           className="location-control"
@@ -365,7 +363,7 @@ export function CursorWindow() {
                   key={option.id}
                   onClick={() => switchPlayground(index)}
                 >
-                  <span>{option.name}</span>
+                  <span className="location-option__label">{option.name}</span>
                 </button>
               ))}
             </div>

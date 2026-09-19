@@ -2,7 +2,6 @@ html:root {
   --project-bg: var(--muted);
   --background: var(--project-bg);
   background: var(--project-bg);
-  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: gray transparent;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CircularGallery } from './CircularGallery'
 import { DitherReveal } from './DitherReveal'
 
@@ -7,6 +7,7 @@ const PLAYGROUNDS = [
   { id: 'dither', name: 'Dither' },
   { id: 'gallery', name: 'Gallery' },
 ]
+const CUSTOM_CURSOR_CLASS = 'has-playground-custom-cursor'
 
 const GAZE_EYES = [
   { x: 249, y: 318, rx: 38, ry: 24, angle: 7 },
@@ -67,6 +68,9 @@ const GAZE_PEOPLE = [
   { id: 'center-man', eyeIndexes: [2, 3], anchor: { x: 46.2, y: 24.1 } },
   { id: 'right-woman', eyeIndexes: [4, 5], anchor: { x: 78.1, y: 31.3 } },
 ]
+const EMPTY_GAZE_DIRECTIONS = Object.fromEntries(
+  GAZE_PEOPLE.map((person) => [person.id, null]),
+)
 
 const GAZE_PATCH_OFFSETS = {
   n: [{ x: 0, y: 4 }, { x: 0, y: 4 }, { x: 0, y: 6 }],
@@ -74,6 +78,8 @@ const GAZE_PATCH_OFFSETS = {
   s1: [{ x: 0, y: -2 }, { x: 0, y: 0 }, { x: 0, y: -4 }],
   s: [{ x: 0, y: -6 }, { x: 0, y: -4 }, { x: -2, y: -6 }],
 }
+const GAZE_HYSTERESIS_DISTANCE = 1.15
+const gazePoseLoads = new Map()
 
 const ASSET_BASE = `${import.meta.env.BASE_URL}assets/`
 const GALLERY_IMAGES = Array.from(
@@ -83,7 +89,7 @@ const GALLERY_IMAGES = Array.from(
 
 const ENVIRONMENT_CONTROLS = {
   gaze: [
-    { key: 'deadZone', label: 'Center hold', min: 4, max: 24, step: 1, defaultValue: 7, precision: 0, suffix: '%' },
+    { key: 'deadZone', label: 'Center hold', min: 0, max: 12, step: 0.5, defaultValue: 2, precision: 1, suffix: '%' },
     { key: 'cursorScale', label: 'Cursor size', min: 0.65, max: 1.4, step: 0.05, defaultValue: 0.9, precision: 2, suffix: '×' },
   ],
   dither: [
@@ -105,6 +111,28 @@ function defaultSettings() {
 }
 
 const DEFAULT_SETTINGS = defaultSettings()
+
+function loadGazePose(direction) {
+  if (!direction) return Promise.resolve()
+  if (gazePoseLoads.has(direction)) return gazePoseLoads.get(direction)
+
+  const promise = new Promise((resolve) => {
+    const image = new Image()
+    const finish = () => resolve()
+    image.onload = () => {
+      if (typeof image.decode === 'function') {
+        image.decode().catch(() => {}).finally(finish)
+      } else {
+        finish()
+      }
+    }
+    image.onerror = finish
+    image.src = `${ASSET_BASE}${GAZE_ASSETS[direction]}`
+  })
+
+  gazePoseLoads.set(direction, promise)
+  return promise
+}
 
 function gazeDirectionFor(pointer, anchor, deadZone, personId) {
   const deltaX = pointer.x - anchor.x
@@ -163,14 +191,89 @@ function gazeDirectionFor(pointer, anchor, deadZone, personId) {
 }
 
 function GazePlayground({ pointer, settings }) {
-  const directions = Object.fromEntries(
-    GAZE_PEOPLE.map((person) => [
-      person.id,
-      pointer.active
-        ? gazeDirectionFor(pointer, person.anchor, settings.deadZone, person.id)
-        : null,
-    ]),
-  )
+  const [directions, setDirections] = useState(EMPTY_GAZE_DIRECTIONS)
+  const directionsRef = useRef(EMPTY_GAZE_DIRECTIONS)
+  const candidatesRef = useRef({})
+  const candidateVersionsRef = useRef({})
+  const scheduledVersionsRef = useRef({})
+  const stablePointsRef = useRef({})
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!pointer.active) {
+      GAZE_PEOPLE.forEach((person) => {
+        candidatesRef.current[person.id] = null
+        candidateVersionsRef.current[person.id] = (
+          candidateVersionsRef.current[person.id] ?? 0
+        ) + 1
+        scheduledVersionsRef.current[person.id] = null
+      })
+      stablePointsRef.current = {}
+
+      if (Object.values(directionsRef.current).some(Boolean)) {
+        directionsRef.current = EMPTY_GAZE_DIRECTIONS
+        setDirections(EMPTY_GAZE_DIRECTIONS)
+      }
+      return
+    }
+
+    GAZE_PEOPLE.forEach((person) => {
+      const candidate = gazeDirectionFor(
+        pointer,
+        person.anchor,
+        settings.deadZone,
+        person.id,
+      )
+      const current = directionsRef.current[person.id]
+
+      if (candidatesRef.current[person.id] !== candidate) {
+        candidatesRef.current[person.id] = candidate
+        candidateVersionsRef.current[person.id] = (
+          candidateVersionsRef.current[person.id] ?? 0
+        ) + 1
+      }
+      const version = candidateVersionsRef.current[person.id]
+
+      if (candidate === current) {
+        stablePointsRef.current[person.id] = { x: pointer.x, y: pointer.y }
+        scheduledVersionsRef.current[person.id] = null
+        return
+      }
+
+      const stablePoint = stablePointsRef.current[person.id]
+      if (
+        stablePoint
+        && Math.hypot(pointer.x - stablePoint.x, pointer.y - stablePoint.y)
+          < GAZE_HYSTERESIS_DISTANCE
+      ) {
+        return
+      }
+
+      if (scheduledVersionsRef.current[person.id] === version) return
+      scheduledVersionsRef.current[person.id] = version
+      const commitPoint = { x: pointer.x, y: pointer.y }
+
+      loadGazePose(candidate).then(() => {
+        if (
+          !mountedRef.current
+          || candidateVersionsRef.current[person.id] !== version
+          || candidatesRef.current[person.id] !== candidate
+        ) return
+
+        const nextDirections = { ...directionsRef.current, [person.id]: candidate }
+        directionsRef.current = nextDirections
+        stablePointsRef.current[person.id] = commitPoint
+        setDirections(nextDirections)
+      })
+    })
+  }, [pointer, settings.deadZone])
 
   return (
     <div
@@ -217,7 +320,7 @@ function GazePlayground({ pointer, settings }) {
           const offset = GAZE_PATCH_OFFSETS[option]?.[personIndex] ?? { x: 0, y: 0 }
           return (
             <image
-              key={`${option}-${person.id}`}
+              key={person.id}
               className="gaze-state is-active"
               href={`${ASSET_BASE}${GAZE_ASSETS[option]}`}
               x={offset.x}
@@ -231,7 +334,7 @@ function GazePlayground({ pointer, settings }) {
       </svg>
 
       <img
-        className="gaze-cursor"
+        className={`gaze-cursor${pointer.active ? ' is-active' : ''}`}
         src={`${ASSET_BASE}gaze-peony-cursor-small.png`}
         alt=""
         draggable="false"
@@ -258,7 +361,7 @@ function DitherPlayground({ pointer, settings }) {
     <div className="scene scene--dither">
       <DitherReveal imageSrc={`${ASSET_BASE}toki.jpg`} settings={settings} />
       <img
-        className="dither-carrot-cursor"
+        className={`dither-carrot-cursor${pointer.active ? ' is-active' : ''}`}
         src={`${ASSET_BASE}dither-carrot-cursor-small.png`}
         alt=""
         draggable="false"
@@ -276,16 +379,88 @@ function PlaygroundScene({ id, pointer, settings }) {
 
 export function CursorWindow() {
   const canvasRef = useRef(null)
+  const pointerInsideRef = useRef(false)
+  const pointerFrameRef = useRef(0)
+  const pendingPointerRef = useRef(null)
   const [playgroundIndex, setPlaygroundIndex] = useState(0)
   const [pointer, setPointer] = useState({ x: 52, y: 48, active: false })
 
   const playground = PLAYGROUNDS[playgroundIndex]
   const settings = DEFAULT_SETTINGS[playground.id]
+  const usesCustomCursor = playground.id === 'gaze' || playground.id === 'dither'
 
   function switchPlayground(nextIndex) {
     const wrapped = (nextIndex + PLAYGROUNDS.length) % PLAYGROUNDS.length
     setPlaygroundIndex(wrapped)
   }
+
+  useLayoutEffect(() => {
+    const root = document.documentElement
+
+    function queuePointer(nextPointer) {
+      pendingPointerRef.current = nextPointer
+      if (pointerFrameRef.current) return
+
+      pointerFrameRef.current = requestAnimationFrame(() => {
+        pointerFrameRef.current = 0
+        if (!pendingPointerRef.current) return
+        setPointer(pendingPointerRef.current)
+        pendingPointerRef.current = null
+      })
+    }
+
+    function setInside(event) {
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const bounds = canvas.getBoundingClientRect()
+      const isInside = event.clientX >= bounds.left
+        && event.clientX <= bounds.right
+        && event.clientY >= bounds.top
+        && event.clientY <= bounds.bottom
+
+      root.classList.toggle(CUSTOM_CURSOR_CLASS, isInside && usesCustomCursor)
+
+      if (!isInside) {
+        if (pointerInsideRef.current) {
+          pointerInsideRef.current = false
+          setPointer((current) => ({ ...current, active: false }))
+        }
+        return
+      }
+
+      pointerInsideRef.current = true
+      queuePointer({
+        x: ((event.clientX - bounds.left) / bounds.width) * 100,
+        y: ((event.clientY - bounds.top) / bounds.height) * 100,
+        active: true,
+      })
+    }
+
+    function deactivatePointer() {
+      pointerInsideRef.current = false
+      pendingPointerRef.current = null
+      cancelAnimationFrame(pointerFrameRef.current)
+      pointerFrameRef.current = 0
+      root.classList.remove(CUSTOM_CURSOR_CLASS)
+      setPointer((current) => (
+        current.active ? { ...current, active: false } : current
+      ))
+    }
+
+    root.classList.toggle(CUSTOM_CURSOR_CLASS, pointerInsideRef.current && usesCustomCursor)
+    window.addEventListener('pointermove', setInside, { passive: true, capture: true })
+    window.addEventListener('blur', deactivatePointer)
+    window.addEventListener('pointercancel', deactivatePointer)
+    return () => {
+      window.removeEventListener('pointermove', setInside, { capture: true })
+      window.removeEventListener('blur', deactivatePointer)
+      window.removeEventListener('pointercancel', deactivatePointer)
+      pendingPointerRef.current = null
+      cancelAnimationFrame(pointerFrameRef.current)
+      pointerFrameRef.current = 0
+      root.classList.remove(CUSTOM_CURSOR_CLASS)
+    }
+  }, [usesCustomCursor])
 
   useEffect(() => {
     function handleShortcut(event) {
@@ -300,30 +475,10 @@ export function CursorWindow() {
     return () => window.removeEventListener('keydown', handleShortcut)
   }, [])
 
-  useEffect(() => {
-    function trackPointer(event) {
-      const canvas = canvasRef.current
-      if (!canvas) return
-      const bounds = canvas.getBoundingClientRect()
-      const isInside = event.clientX >= bounds.left
-        && event.clientX <= bounds.right
-        && event.clientY >= bounds.top
-        && event.clientY <= bounds.bottom
-      if (!isInside) return
-
-      setPointer({
-        x: ((event.clientX - bounds.left) / bounds.width) * 100,
-        y: ((event.clientY - bounds.top) / bounds.height) * 100,
-        active: true,
-      })
-    }
-
-    window.addEventListener('pointermove', trackPointer, { passive: true })
-    return () => window.removeEventListener('pointermove', trackPointer)
-  }, [])
-
   function handlePointerMove(event) {
     const bounds = canvasRef.current.getBoundingClientRect()
+    pointerInsideRef.current = true
+    document.documentElement.classList.toggle(CUSTOM_CURSOR_CLASS, usesCustomCursor)
     const next = {
       x: ((event.clientX - bounds.left) / bounds.width) * 100,
       y: ((event.clientY - bounds.top) / bounds.height) * 100,
@@ -331,6 +486,15 @@ export function CursorWindow() {
     }
 
     setPointer(next)
+  }
+
+  function handlePointerLeave() {
+    pointerInsideRef.current = false
+    pendingPointerRef.current = null
+    cancelAnimationFrame(pointerFrameRef.current)
+    pointerFrameRef.current = 0
+    document.documentElement.classList.remove(CUSTOM_CURSOR_CLASS)
+    setPointer((current) => ({ ...current, active: false }))
   }
 
   return (
@@ -372,6 +536,7 @@ export function CursorWindow() {
         tabIndex="0"
         onPointerEnter={handlePointerMove}
         onPointerDown={handlePointerMove}
+        onPointerLeave={handlePointerLeave}
       >
         <PlaygroundScene
           id={playground.id}

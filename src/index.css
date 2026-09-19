@@ -7,6 +7,11 @@ html:root {
   scrollbar-color: gray transparent;
 }
 
+html.has-playground-custom-cursor,
+html.has-playground-custom-cursor * {
+  cursor: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -212,10 +217,18 @@ body {
   width: 4.5rem;
   height: auto;
   filter: drop-shadow(0 0.14rem 0.16rem rgb(73 38 18 / 0.16));
+  backface-visibility: hidden;
   pointer-events: none;
-  transform: translate(-50%, -50%) scale(var(--gaze-cursor-scale, 1));
+  transform: translate3d(-50%, -50%, 0) scale(var(--gaze-cursor-scale, 1));
   transform-origin: center;
   user-select: none;
+  visibility: hidden;
+  will-change: left, top, transform;
+  -webkit-user-drag: none;
+}
+
+.gaze-cursor.is-active {
+  visibility: visible;
 }
 
 /* Gallery */
@@ -321,11 +334,19 @@ body {
   z-index: 2;
   width: 6.25rem;
   height: auto;
+  backface-visibility: hidden;
   pointer-events: none;
   user-select: none;
-  transform: translate(-10%, -90%) scaleX(-1) rotate(-3deg);
+  transform: translate3d(-10%, -90%, 0) scaleX(-1) rotate(-3deg);
   transform-origin: 50% 50%;
   filter: drop-shadow(0 0.2rem 0.24rem rgb(18 10 4 / 0.22));
+  visibility: hidden;
+  will-change: left, top, transform;
+  -webkit-user-drag: none;
+}
+
+.dither-carrot-cursor.is-active {
+  visibility: visible;
 }
 
 @media (max-width: 680px) {

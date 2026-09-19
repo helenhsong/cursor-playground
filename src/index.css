@@ -239,6 +239,10 @@ body {
 }
 
 .circular-gallery {
+  --gallery-ambient-opacity: 0;
+  --gallery-ambient-angle: 125deg;
+  --gallery-ambient-start: rgb(232 226 232);
+  --gallery-ambient-end: rgb(225 232 237);
   position: relative;
   width: 100%;
   height: 100%;
@@ -248,8 +252,23 @@ body {
   user-select: none;
 }
 
+.circular-gallery::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: linear-gradient(
+    var(--gallery-ambient-angle),
+    var(--gallery-ambient-start) 0%,
+    var(--gallery-ambient-end) 100%
+  );
+  content: '';
+  opacity: var(--gallery-ambient-opacity);
+  pointer-events: none;
+}
+
 .circular-gallery__stage {
   position: absolute;
+  z-index: 1;
   display: flex;
   inset: 0;
   align-items: center;
@@ -275,11 +294,21 @@ body {
   position: absolute;
   top: 0;
   left: 0;
+  padding: 0;
+  border: 0;
   overflow: hidden;
+  appearance: none;
+  background: transparent;
   box-shadow: 0 0.45rem 1.2rem rgb(20 20 24 / 0.16);
+  cursor: pointer;
   transform-origin: center;
   transform-style: preserve-3d;
   backface-visibility: visible;
+}
+
+.circular-gallery__card:focus-visible {
+  outline: 2px solid rgb(70 92 124 / 0.68);
+  outline-offset: 3px;
 }
 
 .circular-gallery__card img,
@@ -298,6 +327,7 @@ body {
   image-rendering: auto;
   object-fit: cover;
   user-select: none;
+  -webkit-user-drag: none;
 }
 
 /* Dither */

@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@helenhsong/ui": "github:helenhsong/ui#3776b46f1702f637fc9361341f0d2c2766d5e0e0",
+    "@helenhsong/ui": "github:helenhsong/ui#c30be2cf81d729b50ef661077d54019d6fd8d8a7",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

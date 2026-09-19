@@ -232,6 +232,9 @@ export function CircularGallery({
   const totalCards = Math.max(1, ENTRY_CARDS + cardCount - 1)
   const entryFraction = ENTRY_CARDS / totalCards
   const spanDegrees = ((cardCount - 1) * 360) / cardCount
+  const lapProgress = (1 - entryFraction) * (
+    cardCount / Math.max(1, cardCount - 1)
+  )
   const span = 2 * ringRadius + Math.hypot(cardOptions.width, cardOptions.height)
   const baseScale = size.width > 0 && size.height > 0 && span > 0
     ? Math.max(0.01, Math.min(1, Math.min(size.width, size.height) / span) * RING_FIT)
@@ -299,6 +302,7 @@ export function CircularGallery({
     scrollLerp,
     scrollTotalPixels,
     entryFraction,
+    lapProgress,
     spanDegrees,
     zoomScale,
     renderScale,
@@ -308,6 +312,7 @@ export function CircularGallery({
     cardCount,
     entryFraction,
     hoverRadius,
+    lapProgress,
     pointerFine,
     ringRadius,
     scrollLerp,
@@ -443,6 +448,14 @@ export function CircularGallery({
 
       const scrollEase = 1 - Math.pow(1 - config.scrollLerp, deltaTime * 60)
       state.progressCurrent += (state.progressTarget - state.progressCurrent) * scrollEase
+      const lapEnd = config.entryFraction + config.lapProgress
+      while (
+        config.lapProgress > 0
+        && state.progressCurrent >= lapEnd
+      ) {
+        state.progressCurrent -= config.lapProgress
+        state.progressTarget -= config.lapProgress
+      }
       const progress = state.progressCurrent
       const entry = smoothstep(clamp(progress / config.entryFraction, 0, 1))
       const ride = config.entryFraction < 1
@@ -522,10 +535,9 @@ export function CircularGallery({
 
     function advance(deltaPixels) {
       const config = frame.current
-      const nextProgress = clamp(
-        state.progressTarget + deltaPixels / config.scrollTotalPixels,
+      const nextProgress = Math.max(
         0,
-        1,
+        state.progressTarget + deltaPixels / config.scrollTotalPixels,
       )
       const isReturningToCircle = deltaPixels < 0
         && nextProgress < config.entryFraction

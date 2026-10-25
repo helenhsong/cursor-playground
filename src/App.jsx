@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ProjectHeader } from '@helenhsong/ui'
 import '@helenhsong/ui/style.css'
+import '@fontsource/geist-sans/latin-400.css'
 import readme from '../README.md?raw'
 import { CursorWindow } from './CursorWindow.jsx'
 

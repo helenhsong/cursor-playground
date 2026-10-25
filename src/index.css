@@ -6,6 +6,13 @@ html:root {
   scrollbar-color: gray transparent;
 }
 
+/* The header links (helenhsong.com, README) are set in Geist Sans,
+   regular weight, as Helen asked. */
+html .ph-label {
+  font-family: 'Geist Sans', system-ui, sans-serif;
+  font-weight: 400;
+}
+
 html.has-playground-custom-cursor,
 html.has-playground-custom-cursor * {
   cursor: none !important;
